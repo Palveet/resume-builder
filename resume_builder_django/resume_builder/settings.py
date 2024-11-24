@@ -24,9 +24,9 @@ SECRET_KEY = "django-insecure-4g$d2qx2w^nr2ey0_xk0gjc+3%tpt3nw8b-$sou*tsu#y3qd^c
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
+CORS_ALLOW_ALL_ORIGINS = True
 ALLOWED_HOSTS = []
-
+  
 
 # Application definition
 
@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'rest_framework',
     'resume',
+    'corsheaders',
 ]
 
 REST_FRAMEWORK = {
@@ -58,6 +59,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.common.CommonMiddleware',
 ]
 
 ROOT_URLCONF = "resume_builder.urls"
