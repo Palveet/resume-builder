@@ -8,6 +8,25 @@ from docx import Document
 from .models import Resume
 from .serializers import ResumeSerializer
 from rest_framework.negotiation import BaseContentNegotiation
+from django.utils.html import strip_tags
+from django.contrib.auth.models import User
+
+class UserRegistrationView(APIView):
+    authentication_classes = []
+    permission_classes = []
+    def post(self, request):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        email = request.data.get("email")
+
+        if User.objects.filter(username=username).exists():
+            raise ValidationError("Username already exists.")
+
+        user = User.objects.create_user(username=username, password=password, email=email)
+        user.save()
+
+        return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
+
 
 class ResumeView(APIView):
     permission_classes = [IsAuthenticated]
@@ -62,9 +81,10 @@ class NoContentNegotiation(BaseContentNegotiation):
         return None, None
 
 
+
+
 class GeneratePDF(APIView):
     permission_classes = [IsAuthenticated]
-    content_negotiation_class = NoContentNegotiation  
 
     def get(self, request, pk):
         try:
@@ -72,7 +92,7 @@ class GeneratePDF(APIView):
         except Resume.DoesNotExist:
             return HttpResponse("Resume not found", status=404)
 
-        # Create PDF
+
         response = HttpResponse(content_type='application/pdf')
         response['Content-Disposition'] = f'attachment; filename="{resume.title}.pdf"'
 
@@ -81,9 +101,22 @@ class GeneratePDF(APIView):
         p.drawString(100, 780, f"Name: {resume.personal_info['name']}")
         p.drawString(100, 760, f"Email: {resume.personal_info['email']}")
         p.drawString(100, 740, f"Phone: {resume.personal_info['phone']}")
-        p.save()
 
+        p.drawString(100, 720, "Education:")
+        education_content = strip_tags(resume.education.replace("<br>", "\n"))  
+        p.drawString(120, 700, education_content[:1000])  
+
+        p.drawString(100, 680, "Work Experience:")
+        work_experience_content = strip_tags(resume.work_experience.replace("<br>", "\n"))
+        p.drawString(120, 660, work_experience_content[:1000])
+
+        p.drawString(100, 640, "Skills:")
+        skills_content = strip_tags(resume.skills.replace("<br>", "\n"))
+        p.drawString(120, 620, skills_content[:1000])
+
+        p.save()
         return response
+
 
 
 class GenerateDOCX(APIView):
