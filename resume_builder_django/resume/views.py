@@ -11,23 +11,53 @@ from rest_framework.negotiation import BaseContentNegotiation
 from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from .models import UserProfile
 
 class UserRegistrationView(APIView):
     authentication_classes = []
     permission_classes = []
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
         email = request.data.get("email")
+        age = request.data.get("age")
+        dob = request.data.get("dob")
+        gender = request.data.get("gender")
 
         if User.objects.filter(username=username).exists():
-            raise ValidationError("Username already exists.")
+            return Response({"error": "Username already exists."}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.create_user(username=username, password=password, email=email)
-        user.save()
-
+        UserProfile.objects.create(
+            user=user,
+            age=age,
+            dob=dob,
+            gender=gender,
+        )
         return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
+
+class UserProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        profile = request.user.profile
+        data = {
+            "username": request.user.username,
+            "email": request.user.email,
+            "age": profile.age,
+            "dob": profile.dob,
+            "gender": profile.gender,
+        }
+        return Response(data)
+
+    def put(self, request):
+        profile = request.user.profile
+        profile.age = request.data.get("age", profile.age)
+        profile.dob = request.data.get("dob", profile.dob)
+        profile.gender = request.data.get("gender", profile.gender)
+        profile.save()
+        return Response({"message": "Profile updated successfully"})
 
 
 class ResumeView(APIView):
