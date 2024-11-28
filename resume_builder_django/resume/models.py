@@ -18,6 +18,9 @@ class Resume(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    username = models.CharField(max_length=100,default="")
+    name = models.CharField(max_length=100,default="")
+    email = models.CharField(max_length=100,default="")
     age = models.IntegerField(null=True, blank=True)
     dob = models.DateField(null=True, blank=True)
     gender = models.CharField(max_length=10, choices=[("Male", "Male"), ("Female", "Female"), ("Other", "Other")], null=True, blank=True)

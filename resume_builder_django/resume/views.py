@@ -20,6 +20,7 @@ class UserRegistrationView(APIView):
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
+        name = request.data.get("name")
         email = request.data.get("email")
         age = request.data.get("age")
         dob = request.data.get("dob")
@@ -31,10 +32,27 @@ class UserRegistrationView(APIView):
         user = User.objects.create_user(username=username, password=password, email=email)
         UserProfile.objects.create(
             user=user,
+            username=username,
+            name = name,
+            email = email,
             age=age,
             dob=dob,
             gender=gender,
         )
+        default_resume = Resume.objects.create(
+            user=user,
+            title="Default Resume",
+            personal_info={
+                "name": name,
+                "email": email,
+                "phone": "",
+            },
+            education="Enter your education details here...",
+            work_experience="Enter your work experience here...",
+            skills="Enter your skills here..."
+        )
+        default_resume.save()
+
         return Response({"message": "User registered successfully"}, status=status.HTTP_201_CREATED)
 
 class UserProfileView(APIView):
