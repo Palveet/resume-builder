@@ -1,0 +1,53 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Work Experience</title>
+    <style>
+        body {
+            line-height: 1.6;
+        }
+        ul {
+            padding-left: 20px;
+            list-style-type: disc;
+        }
+        li {
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #4a4a4a;
+        }
+
+
+.ql-font-arial {
+    font-family: Arial, sans-serif;
+}
+.ql-font-times-new-roman {
+    font-family: "Times New Roman", serif;
+}
+.ql-font-courier {
+    font-family: "Courier Prime", monospace;
+}
+.ql-font-comic-sans {
+    font-family: "Comic Sans MS", cursive;
+}
+.ql-font-georgia {
+    font-family: Georgia, serif;
+}
+.ql-font-impact {
+    font-family: Impact!important;
+}
+
+
+.ql-snow .ql-picker.ql-font .ql-picker-label::before, .ql-snow .ql-picker.ql-font .ql-picker-item::before{
+  content: attr(data-value)!important;
+}
+    </style>
+
+    
+</head>
+<body>
+    {{ resume_content|safe }}  
+</body>
+</html>
