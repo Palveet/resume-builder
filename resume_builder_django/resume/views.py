@@ -12,6 +12,8 @@ from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import UserProfile
+from xhtml2pdf import pisa
+from django.template.loader import render_to_string
 
 class UserRegistrationView(APIView):
     authentication_classes = []
@@ -59,6 +61,7 @@ class UserProfileView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        print(request)
         profile = request.user.profile
         data = {
             "username": request.user.username,
@@ -66,6 +69,7 @@ class UserProfileView(APIView):
             "age": profile.age,
             "dob": profile.dob,
             "gender": profile.gender,
+            "name":profile.name
         }
         return Response(data)
 
@@ -74,6 +78,7 @@ class UserProfileView(APIView):
         profile.age = request.data.get("age", profile.age)
         profile.dob = request.data.get("dob", profile.dob)
         profile.gender = request.data.get("gender", profile.gender)
+        profile.name = request.data.get("name", profile.name)
         profile.save()
         return Response({"message": "Profile updated successfully"})
 
@@ -125,13 +130,39 @@ class ResumeView(APIView):
         return Response({'message': 'Resume deleted successfully'}, status=status.HTTP_204_NO_CONTENT)
 
 
-class NoContentNegotiation(BaseContentNegotiation):
-    """Disable content negotiation entirely for this view."""
-    def select_renderer(self, request, renderers, format_suffix):
-        return None, None
+# class GeneratePDF(APIView):
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request, pk):
+#         try:
+#             resume = Resume.objects.get(pk=pk, user=request.user)
+#         except Resume.DoesNotExist:
+#             return HttpResponse("Resume not found", status=404)
 
 
+#         response = HttpResponse(content_type='application/pdf')
+#         response['Content-Disposition'] = f'attachment; filename="{resume.title}.pdf"'
 
+#         p = canvas.Canvas(response)
+#         # p.drawString(100, 800, f"Resume: {resume.title}")
+#         # p.drawString(100, 780, f"Name: {resume.personal_info['name']}")
+#         # p.drawString(100, 760, f"Email: {resume.personal_info['email']}")
+#         # p.drawString(100, 740, f"Phone: {resume.personal_info['phone']}")
+    
+#         # p.drawString(100, 720, "Education:")
+#         # education_content = strip_tags(resume.education.replace("<br>", "\n"))  
+#         # p.drawString(120, 700, education_content[:1000])  
+
+#         p.drawString(100, 680, "Work Experience:")
+#         work_experience_content = strip_tags(resume.work_experience.replace("<br>", "\n"))
+#         p.drawString(120, 660, work_experience_content[:1000])
+
+#         # p.drawString(100, 640, "Skills:")
+#         # skills_content = strip_tags(resume.skills.replace("<br>", "\n"))
+#         # p.drawString(120, 620, skills_content[:1000])
+
+#         p.save()
+#         return response
 
 class GeneratePDF(APIView):
     permission_classes = [IsAuthenticated]
@@ -142,36 +173,29 @@ class GeneratePDF(APIView):
         except Resume.DoesNotExist:
             return HttpResponse("Resume not found", status=404)
 
+        # Only fetch the "work_experience" field
+        work_experience_content = resume.work_experience  # This contains the HTML (e.g., <ul>, <li>)
 
-        response = HttpResponse(content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="{resume.title}.pdf"'
+        # Pass only the necessary content to the template
+        context = {
+            "work_experience": work_experience_content,  # Raw HTML
+        }
 
-        p = canvas.Canvas(response)
-        p.drawString(100, 800, f"Resume: {resume.title}")
-        p.drawString(100, 780, f"Name: {resume.personal_info['name']}")
-        p.drawString(100, 760, f"Email: {resume.personal_info['email']}")
-        p.drawString(100, 740, f"Phone: {resume.personal_info['phone']}")
+        # Render the content to HTML
+        html = render_to_string("work_experience_template.html", context)
+        
+        # Generate the PDF
+        response = HttpResponse(content_type="application/pdf")
+        response["Content-Disposition"] = f'attachment; filename="WorkExperience.pdf"'
 
-        p.drawString(100, 720, "Education:")
-        education_content = strip_tags(resume.education.replace("<br>", "\n"))  
-        p.drawString(120, 700, education_content[:1000])  
-
-        p.drawString(100, 680, "Work Experience:")
-        work_experience_content = strip_tags(resume.work_experience.replace("<br>", "\n"))
-        p.drawString(120, 660, work_experience_content[:1000])
-
-        p.drawString(100, 640, "Skills:")
-        skills_content = strip_tags(resume.skills.replace("<br>", "\n"))
-        p.drawString(120, 620, skills_content[:1000])
-
-        p.save()
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        if pisa_status.err:
+            return HttpResponse("Error generating PDF", status=500)
         return response
-
 
 
 class GenerateDOCX(APIView):
     permission_classes = [IsAuthenticated]
-    content_negotiation_class = NoContentNegotiation  
     def get(self, request, pk):
         try:
             resume = Resume.objects.get(pk=pk, user=request.user)
@@ -196,8 +220,9 @@ class LogoutView(APIView):
         try:
             refresh_token = request.data["refresh"]
             token = RefreshToken(refresh_token)
+            print(token)
             token.blacklist()
-
+            print("after blacklist")
             return Response({"message": "Logged out successfully"}, status=200)
         except Exception as e:
             return Response({"error": str(e)}, status=400)

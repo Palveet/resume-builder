@@ -1,0 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Arial:wght@400;700&family=Comic+Sans+MS:wght@400;700&family=Courier+Prime:wght@400;700&family=Georgia:wght@400;700&family=Impact:wght@400&family=Times+New+Roman:wght@400;700&display=swap');
+
+
+.ql-font-arial {
+    font-family: Arial, sans-serif;
+}
+.ql-font-times-new-roman {
+    font-family: "Times New Roman", serif;
+}
+.ql-font-courier {
+    font-family: "Courier Prime", monospace;
+}
+.ql-font-comic-sans {
+    font-family: "Comic Sans MS", cursive;
+}
+.ql-font-georgia {
+    font-family: Georgia, serif;
+}
+.ql-font-impact {
+    font-family: Impact, sans-serif;
+}
+
+
+.ql-snow .ql-picker.ql-font .ql-picker-label::before, .ql-snow .ql-picker.ql-font .ql-picker-item::before{
+  content: attr(data-value)!important;
+}
