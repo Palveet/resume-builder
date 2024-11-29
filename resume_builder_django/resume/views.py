@@ -3,17 +3,20 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.http import HttpResponse
-from reportlab.pdfgen import canvas
 from docx import Document
 from .models import Resume
 from .serializers import ResumeSerializer
-from rest_framework.negotiation import BaseContentNegotiation
 from django.utils.html import strip_tags
 from django.contrib.auth.models import User
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import UserProfile
 from xhtml2pdf import pisa
 from django.template.loader import render_to_string
+from docx import Document
+from docx.shared import Pt
+from io import BytesIO
+from bs4 import BeautifulSoup
+from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 class UserRegistrationView(APIView):
     authentication_classes = []
@@ -155,19 +158,48 @@ class GenerateDOCX(APIView):
             resume = Resume.objects.get(pk=pk, user=request.user)
         except Resume.DoesNotExist:
             return HttpResponse("Resume not found", status=404)
+        context = {
+            "resume_content": resume.resume_content,
+        }
+        rendered_html = render_to_string("resume_content_template.html", context)
 
-        resume_content = resume.resume_content
-        clean_content = strip_tags(resume_content) if resume_content else "No Resume details available."
+        soup = BeautifulSoup(rendered_html, "html.parser")
 
         document = Document()
-        document.add_paragraph(clean_content)
+
+        for element in soup.body.children:
+            if element.name == "h1":
+                paragraph = document.add_heading(element.get_text(strip=True), level=1)
+                paragraph.alignment = WD_PARAGRAPH_ALIGNMENT.CENTER
+            elif element.name == "h2":
+                document.add_heading(element.get_text(strip=True), level=2)
+            elif element.name == "h3":
+                document.add_heading(element.get_text(strip=True), level=3)
+            elif element.name == "p":
+                document.add_paragraph(element.get_text(strip=True))
+            elif element.name == "ul":
+                for li in element.find_all("li"):
+                    document.add_paragraph(f"• {li.get_text(strip=True)}", style="List Bullet")
+            elif element.name == "ol":
+                for li in element.find_all("li"):
+                    document.add_paragraph(f"{li.get_text(strip=True)}", style="List Number")
+            elif element.name == "strong":
+                paragraph = document.add_paragraph()
+                run = paragraph.add_run(element.get_text(strip=True))
+                run.bold = True
+            elif element.name == "em":
+                paragraph = document.add_paragraph()
+                run = paragraph.add_run(element.get_text(strip=True))
+                run.italic = True
 
         response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
         response["Content-Disposition"] = f'attachment; filename="{resume.title}.docx"'
-        document.save(response)
+        docx_stream = BytesIO()
+        document.save(docx_stream)
+        docx_stream.seek(0)
+        response.write(docx_stream.read())
 
         return response
-
 
 
 class LogoutView(APIView):
