@@ -36,4 +36,4 @@
 
 ### Frontend Integration
 To connect to the backend, use the associated frontend repository:  
-[Frontend Repository](https://github.com/Palveet/resume-builder)
+[Frontend Repository](https://github.com/Palveet/resume_builder_react)
