@@ -47,7 +47,7 @@ class UserRegistrationView(APIView):
         default_resume = Resume.objects.create(
             user=user,
             title="Default Resume",
-            work_experience="Enter your work experience here...",
+            resume_content="Enter your Resume content here...",
         )
         default_resume.save()
 

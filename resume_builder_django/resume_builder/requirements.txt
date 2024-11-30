@@ -1,0 +1,17 @@
+# Django framework
+Django>=3.2,<5.0
+
+# Django REST framework
+djangorestframework>=3.12.0
+
+# JWT for Django REST Framework
+djangorestframework-simplejwt>=5.0.0
+
+# Library for working with Word documents
+python-docx>=0.8.11
+
+# Library for converting HTML to PDF
+xhtml2pdf>=0.2.5
+
+# BeautifulSoup for HTML parsing and manipulation
+beautifulsoup4>=4.10.0
